@@ -1,0 +1,9 @@
+{
+  "client": {
+    "name": "{{ inventory_hostname }}",
+    "subscriptions": [
+      "{{ operating_system }}"
+    ],
+    "keepalive": { "handler": "slack"}
+  }
+}

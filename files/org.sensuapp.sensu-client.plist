@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>GroupName</key>
+	<string>_sensu</string>
+	<key>KeepAlive</key>
+	<true/>
+	<key>Label</key>
+	<string>org.sensuapp.sensu-client</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/local/bin/sensu-client</string>
+		<string>-c</string>
+		<string>/etc/sensu/config.json</string>
+		<string>-d</string>
+		<string>/etc/sensu/conf.d</string>
+		<string>-l</string>
+		<string>/var/log/sensu/sensu-client.log</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardErrorPath</key>
+	<string>/var/log/sensu/sensu-client.log</string>
+	<key>StandardOutPath</key>
+	<string>/var/log/sensu/sensu-client.log</string>
+	<key>UserName</key>
+	<string>_sensu</string>
+</dict>
+</plist>

@@ -1,0 +1,144 @@
+---
+########################### Target Host(s) ###########################
+# Specify a Single host
+#       hosts: server1
+# Specify a defined group of hosts from hosts inventory
+#       hosts: production
+# Specify a group of hosts
+#       hosts: server1:server2
+########################### Specify Host(s) ##########################
+- hosts:
+########################### Do Not Modify ###########################
+  become: yes
+  vars_files:
+    - ../../vault/sensuClient/sensuClient.yml
+  tasks:
+    - block:
+        - name: linux | operating_system found is linux
+          set_fact:
+            operating_system: linux
+            sensu_binary_path: /usr/bin/
+            sensu_user: sensu
+            sensu_group: sensu
+
+        - name: linux | install sensu repo
+          yum_repository:
+            name: sensu
+            description: yum repo for https://sensuapp.org
+            baseurl: http://sensu.global.ssl.fastly.net/yum/$basearch/
+            gpgcheck: no
+
+        - name: linux | install sensu-client
+          yum:
+            name: sensu
+            state: latest
+          notify: start_linux_sensu
+
+      when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+    - block:
+        - name: macOS | operating_system found is macOS
+          set_fact:
+            operating_system: macOS
+            sensu_binary_path: /usr/local/bin/
+            sensu_user: _sensu
+            sensu_group: _sensu
+
+        - name: macOS | install sensu tap
+          homebrew_tap:
+            tap: sensu/tap
+            state: present
+          become: no
+
+        - name: macOS | install sensu-client
+          homebrew:
+            name: sensu
+            state: present
+          become: no
+          notify: start_macOS_sensu
+
+        - name: macOS | check install
+          stat:
+            path: /etc/sensu
+          register: postinstall_done
+
+        - name: macOS | run postinall
+          shell: /usr/local/opt/sensu/scripts/postinstall
+          when: postinstall_done.stat.isdir is not defined
+
+        - name: macOS | copy LaunchDaemon
+          copy:
+            src: files/org.sensuapp.sensu-client.plist
+            dest: /Library/LaunchDaemons/org.sensuapp.sensu-client.plist
+            owner: root
+            group: wheel
+            mode: 0644
+          notify: start_macOS_sensu
+      when: ansible_distribution == 'MacOSX'
+
+    - name: install sensu plugins
+      shell: "{{ sensu_binary_path }}sensu-install -p {{ item }}"
+      with_items:
+        - sensu-plugins-process-checks
+        - sensu-plugins-load-checks
+        - sensu-plugins-disk-checks
+        - sensu-plugins-memory-checks
+        - sensu-plugins-http:0.3.0
+      tags: plugins
+
+    - name: copy transport config
+      copy:
+        src: files/transport.json
+        dest: /etc/sensu/conf.d/transport.json
+        owner: "{{ sensu_user }}"
+        group: "{{ sensu_group }}"
+        mode: 0644
+        backup: yes
+
+    - name: copy rabbitmq config
+      template:
+        src: templates/rabbitmq.json.j2
+        dest: /etc/sensu/conf.d/rabbitmq.json
+        owner: "{{ sensu_user }}"
+        group: "{{ sensu_group }}"
+        mode: 0644
+        backup: yes
+
+    - name: copy sensu-client config
+      template:
+        src: templates/sensu-client.json.j2
+        dest: /etc/sensu/conf.d/sensu-client.json
+        owner: "{{ sensu_user }}"
+        group: "{{ sensu_group }}"
+        mode: 0644
+        backup: yes
+
+    - name: create ssl directory
+      file:
+        path: /etc/sensu/ssl
+        state: directory
+        owner: "{{ sensu_user }}"
+        group: "{{ sensu_group }}"
+        mode: 0755
+
+    - name: copy ssl cert
+      copy:
+        src: files/{{ item }}
+        dest: /etc/sensu/ssl/{{ item }}
+        owner: "{{ sensu_user }}"
+        group: "{{ sensu_group }}"
+        mode: 0644
+        backup: yes
+      with_items:
+        - "{{ sensuClient_SSL_Cert }}"
+        - "{{ sensuClient_SSL_Key }}"
+
+  handlers:
+    - name: start_linux_sensu
+      service:
+        name: sensu-client
+        state: started
+        enabled: yes
+
+    - name: start_macOS_sensu
+      shell: launchctl load -w /Library/LaunchDaemons/org.sensuapp.sensu-client.plist

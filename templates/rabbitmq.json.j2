@@ -1,0 +1,13 @@
+{
+  "rabbitmq": {
+    "host": "{{ sensuClient_RabbitMQ_URL }}",
+    "port": {{ sensuClient_RabbitMQ_PORT }},
+    "vhost": "{{ sensuClient_RabbitMQ_VHOST }}",
+    "user": "{{ sensuClient_RabbitMQ_USER }}",
+    "password": "{{ sensuClient_RabbitMQ_PASS }}",
+    "ssl": {
+        "cert_chain_file": "/etc/sensu/ssl/cert.pem",
+        "private_key_file": "/etc/sensu/ssl/key.pem"
+    }
+  }
+}
