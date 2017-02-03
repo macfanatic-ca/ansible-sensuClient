@@ -123,8 +123,8 @@
 
     - name: copy ssl cert
       copy:
-        src: files/{{ item }}
-        dest: /etc/sensu/ssl/{{ item }}
+        src: "{{ item }}"
+        dest: /etc/sensu/ssl/
         owner: "{{ sensu_user }}"
         group: "{{ sensu_group }}"
         mode: 0644
