@@ -25,7 +25,7 @@
           yum_repository:
             name: sensu
             description: yum repo for https://sensuapp.org
-            baseurl: http://sensu.global.ssl.fastly.net/yum/$basearch/
+            baseurl: https://sensu.global.ssl.fastly.net/yum/$releasever/$basearch/
             gpgcheck: no
 
         - name: linux | install sensu-client
