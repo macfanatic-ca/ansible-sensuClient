@@ -7,7 +7,7 @@
 # Specify a group of hosts
 #       hosts: server1:server2
 ########################### Specify Host(s) ##########################
-- hosts:
+- hosts: 
 ########################### Do Not Modify ###########################
   become: yes
   vars_files:
@@ -33,8 +33,8 @@
             name: sensu
             state: latest
           notify: start_linux_sensu
-
       when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+      tags: install
 
     - block:
         - name: macOS | operating_system found is macOS
@@ -75,6 +75,7 @@
             mode: 0644
           notify: start_macOS_sensu
       when: ansible_distribution == 'MacOSX'
+      tags: install
 
     - name: install sensu plugins
       shell: "{{ sensu_binary_path }}sensu-install -p {{ item }}"
