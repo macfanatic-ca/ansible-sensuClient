@@ -7,7 +7,7 @@
 # Specify a group of hosts
 #       hosts: server1:server2
 ########################### Specify Host(s) ##########################
-- hosts: 
+- hosts:
 ########################### Do Not Modify ###########################
   become: yes
   vars_files:
@@ -27,6 +27,18 @@
             description: yum repo for https://sensuapp.org
             baseurl: https://sensu.global.ssl.fastly.net/yum/$releasever/$basearch/
             gpgcheck: no
+
+        - name: linux | check if sensu-client.service is installed
+          stat:
+            path: /etc/systemd/system/sensu-client.service
+          register: service_status
+
+        - name: linux | shutdown sensu-client.service
+          systemd:
+            name: sensu-client.service
+            state: stopped
+          when: service_status.stat.exists
+          notify: start_linux_sensu
 
         - name: linux | install sensu-client
           yum:
