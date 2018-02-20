@@ -1,0 +1,44 @@
+---
+########################### Target Host(s) ###########################
+# Specify a Single host
+#       hosts: server1
+# Specify a defined group of hosts from hosts inventory
+#       hosts: production
+# Specify a group of hosts
+#       hosts: server1:server2
+########################### Specify Host(s) ##########################
+- hosts: 
+########################### Do Not Modify ###########################
+  become: yes
+  vars_files:
+    - ../../vault/sensuClient/sensuClient.yml
+  tasks:
+    - name: disable sensu repo
+      yum_repository:
+        name: sensu
+        description: yum repo for https://sensuapp.org
+        baseurl: https://sensu.global.ssl.fastly.net/yum/$releasever/$basearch/
+        gpgcheck: no
+        enabled: no
+
+    - name: shutdown sensu-client.service
+      systemd:
+        name: sensu-client.service
+        state: stopped
+
+    - name: uninstall sensu-client
+      yum:
+        name: sensu
+        state: removed
+
+    - name: remove sensu directory
+      file:
+        path: /etc/sensu/
+        state: absent
+        backup: yes
+
+    - name: remove yum repo
+      file:
+        path: /etc/yum.repos.d/sensu.repo
+        state: absent
+      tags: remove_repo
